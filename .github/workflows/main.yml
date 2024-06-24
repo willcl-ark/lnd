@@ -216,8 +216,26 @@ jobs:
           go-version: '${{ env.GO_VERSION }}'
           key-prefix: unit-test
 
-      - name: install bitcoind
+      - name: Cache bitcoind
+        id: restore-cache
+        uses: actions/cache/restore@v4
+        with:
+          # The path used here must match that used in install_bitcoind.sh
+          path: bitcoind-${{ env.BITCOIN_VERSION }}
+          key: bitcoind-${{ env.BITCOIN_VERSION }}-${{ runner.os }}
+
+      - name: Install bitcoind
         run: ./scripts/install_bitcoind.sh $BITCOIN_VERSION
+
+      - name: Save bitcoind cache
+        uses: actions/cache/save@v4
+        id: save-cache
+        # Only save from master branch to make cache re-usable across feature branches
+        if: github.ref == 'refs/heads/master'
+        with:
+          # The path used here must match that used in install_bitcoind.sh
+          path: bitcoind-${{ env.BITCOIN_VERSION }}
+          key: bitcoind-${{ env.BITCOIN_VERSION }}-${{ runner.os }}
 
       - name: run ${{ matrix.unit_type }}
         run: make ${{ matrix.unit_type }}
@@ -273,8 +291,23 @@ jobs:
           go-version: '${{ env.GO_VERSION }}'
           key-prefix: integration-test
 
-      - name: install bitcoind
+      - name: Cache bitcoind
+        id: restore-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: bitcoind-${{ env.BITCOIN_VERSION }}
+          key: bitcoind-${{ env.BITCOIN_VERSION }}-${{ runner.os }}
+
+      - name: Install bitcoind
         run: ./scripts/install_bitcoind.sh $BITCOIN_VERSION
+
+      - name: Save bitcoind cache
+        uses: actions/cache/save@v4
+        id: save-cache
+        if: github.ref == 'refs/heads/master'
+        with:
+          path: bitcoind-${{ env.BITCOIN_VERSION }}
+          key: bitcoind-${{ env.BITCOIN_VERSION }}-${{ runner.os }}
 
       - name: run ${{ matrix.name }}
         run: make itest-parallel tranches=${{ env.TRANCHES }} ${{ matrix.args }}
@@ -356,8 +389,23 @@ jobs:
           go-version: '${{ env.GO_VERSION }}'
           key-prefix: integration-test
 
-      - name: install bitcoind
+      - name: Cache bitcoind
+        id: restore-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: bitcoind-${{ env.BITCOIN_VERSION }}
+          key: bitcoind-${{ env.BITCOIN_VERSION }}-${{ runner.os }}
+
+      - name: Install bitcoind
         run: ./scripts/install_bitcoind.sh $BITCOIN_VERSION
+
+      - name: Save bitcoind cache
+        uses: actions/cache/save@v4
+        id: save-cache
+        if: github.ref == 'refs/heads/master'
+        with:
+          path: bitcoind-${{ env.BITCOIN_VERSION }}
+          key: bitcoind-${{ env.BITCOIN_VERSION }}-${{ runner.os }}
 
       - name: run itest
         run: PATH=$PATH:/usr/local/bin make itest-parallel tranches=${{ env.TRANCHES }} backend=bitcoind
